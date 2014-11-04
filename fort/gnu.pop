@@ -1,0 +1,6 @@
+
+awk '{if ($3 == 1 && $4 == 1) printf("%s   %s  ",$2,$5)}; {if ($3 == 2 && $4 == 2) print $5}' out.quant >risu.quant
+
+plot \
+ 'risu.quant' u 1:2 w l lt 1 lw 2
+

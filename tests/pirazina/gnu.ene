@@ -1,0 +1,10 @@
+
+eV=27.2113957
+e0=4.84/eV
+
+set xrange [0:]
+
+plot \
+'out.quant' u 2:($5-e0)    t "Etot" w l 1
+#'out.quant' u 2:6          t "Ekin" w l 2, \
+#'out.quant' u 2:($5-e0-$6) t "Epot" w l 3

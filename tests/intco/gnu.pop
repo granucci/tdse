@@ -1,0 +1,6 @@
+
+!awk '{if ($3 == 2 && $5 == "") print }' out.quant >oout
+
+set grid
+plot \
+'oout'  u 2:4 w l 1
