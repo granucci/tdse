@@ -48,6 +48,8 @@ contains
        end do
     elseif (d%wpack == 'old') then
        read(d%filewp)
+       read(d%filewp)
+       read(d%filewp)
        do
          read(d%filewp,iostat=icod)i,d%t0,rw
          if (icod /= 0) then
