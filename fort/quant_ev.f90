@@ -86,11 +86,15 @@ program quant_ev
 !                 massima del campo elettrico.
 ! OMEGA0        = frequenza dell'onda portante. Per il momento la sola
 !                 onda portante implementata e` del tipo cos(OMEGA0*t).
+! LASERCW       = 0, onda portante tipo cos(OMEGA0*t), default;
+!                 1, onda portante tipo sin(OMEGA0*t).
 ! LASERTYP      = intero che specifica la forma analitica dell'inviluppo.
 !                 Il campo e` dato da  (inviluppo) * (onda portante).
 !                 1, inviluppo = 1;
 !                 2, inviluppo gaussiano = exp(-((t-t0)/tau)**2).
-!                 3, inviluppo cossq     = cos(pi*(t-t0)/(2*tau)).
+!                 3, inviluppo cossq     = cos(pi*(t-t0)/(2*tau))
+!                    nell'intervallo t0-tau <= t <= t0+tau. Al difuori di tale
+!                    intervallo l'inviluppo vale 0.
 ! LASERPARM     = parametri dell'inviluppo.
 !                 - caso LASERTYP = 2: inviluppo gaussiano.
 !                   t0  = LASERPARM(1)
@@ -109,7 +113,7 @@ program quant_ev
   implicit none
   integer               :: ndim
   integer               :: nstati,tcycles,nprt,istati,nprt_wp
-  integer               :: iwrt,adiabatize,lasertyp
+  integer               :: iwrt,adiabatize,lasertyp,lasercw
   logical               :: hcomplex,radiation
   real(kind=dpr)        :: time,ene_add,thrwp,omega0
   character (len=120)   :: file_mol,file_wp,file_dip
@@ -121,7 +125,7 @@ program quant_ev
   namelist /DAT/ rmin,rmax,nr,massa,nstati,time,tcycles,file_wp,wpack, &
    &  omega,r0,p0,istati,file_mol,nprt,ene_add,thrwp,nprt_wp, &
    &  iwrt,adiabatize,ndim,hcomplex, &
-   &  radiation,omega0,e0,lasertyp,laserparm,file_dip
+   &  radiation,omega0,e0,lasertyp,lasercw,laserparm,file_dip
   type (discr)          :: d
   integer               :: iw,i,nrtot
   !
@@ -137,6 +141,7 @@ program quant_ev
   iwrt          = 0
   hcomplex      = .false.
   radiation     = .false.
+  lasercw       = 0
   file_dip      = ''
   read(5,DAT)
   if (nprt_wp == -1) nprt_wp = nprt
@@ -171,6 +176,7 @@ program quant_ev
   if (d%radiation) then
      d%lsr%omega0 = omega0
      d%lsr%e0 = e0
+     d%lsr%lasercw = lasercw
      d%lsr%lasertyp = lasertyp
      d%lsr%laserparm = laserparm
   endif

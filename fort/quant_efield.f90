@@ -84,7 +84,15 @@ contains
     real(kind=dpr) :: t,cw,g,t0,tau,invl
 
     t = d%ttot - d%time*0.5_dpr
-    cw=cos(d%lsr%omega0*t)
+
+    if (d%lsr%lasercw == 0) then
+       cw=cos(d%lsr%omega0*t)
+    elseif (d%lsr%lasercw == 1) then
+       cw=sin(d%lsr%omega0*t)
+    elseif (d%lsr%lasercw > 1) then
+       write(6,'(a,i8)') " unknown carrier wave.   lasercw=",d%lsr%lasercw
+       stop 12
+    endif
 
     invl=0.0_dpr
     if (d%lsr%lasertyp == 1) then

@@ -5,6 +5,7 @@ module quant_util
   integer, parameter :: dpc=kind((1.0_dpr,1.0_dpr))
   !
   type laser
+     integer :: lasercw
      integer :: lasertyp
      real(kind=dpr) :: omega0
      real(kind=dpr), dimension(3) :: E0
