@@ -3,9 +3,12 @@ module quant_mod
                         &  aprod,ind_fft_kin
   use quant_sys, only: hmol,ini_wp
   use quant_efield, only: efield
+  use fft_drv, only: fft_ini, fft_end, fft_fwrd, fft_bwrd
   implicit none
-  public :: quant_integ
   private
+  public :: quant_integ
+  complex (kind=dpc), allocatable, dimension (:)   :: rwx
+  integer, allocatable, dimension (:)              :: nrx
   !
 contains
   !-------------------------------------------------------------
@@ -16,6 +19,7 @@ contains
     !
     type (hamil) :: hel
     complex (kind=dpc), allocatable, dimension (:,:) :: rw
+    integer, dimension (d%ndim) :: nrinv
     integer :: i,npt,nstati,nr1,nstri,nstru
     !
     nstati = d%nstati
@@ -43,6 +47,13 @@ contains
     call ind_fft_kin(d)
     call wrtgrd(d,iw)
     !
+    allocate (rwx(nr1),nrx(d%ndim))
+    !
+    call fft_ini(d,rwx,nrx)
+    !!nrinv(1:d%ndim) = d%nr(d%ndim:1:-1) + 1
+    !!planf = fftw_plan_dft(d%ndim,nrinv,rwx,rwx,FFTW_FORWARD,FFTW_MEASURE)
+    !!planb = fftw_plan_dft(d%ndim,nrinv,rwx,rwx,FFTW_BACKWARD,FFTW_MEASURE)
+    !!fftw3_fac = 1.0_dpr/sqrt(real(nr1,kind=dpr))
     !
     d%t0 = 0.0_dpr
     call ini_wp(d,rw)
@@ -61,6 +72,10 @@ contains
        endif
     end do
     !
+    call fft_end
+    !!call fftw_destroy_plan(planf)
+    !!call fftw_destroy_plan(planb)
+    deallocate (rwx,nrx)
     deallocate (rw)
     deallocate (hel%uteu)
     deallocate (hel%e)
@@ -143,13 +158,10 @@ contains
   end subroutine split_op
   !-------------------------------------------------------------
   subroutine split_kin(d,hel,rw)
-    use singleton
     implicit none
     type (discr), intent (in)                           :: d
     type (hamil), intent (in)                           :: hel
     complex (kind=dpc), dimension (:,:), intent (inout) :: rw
-    complex (kind=dpc), dimension (size(rw,1)) :: rwx
-    integer, dimension (size(d%nr,1))          :: nrx
     integer :: alpha
     integer, save :: ifirst=0, ndim, nrtot
     !
@@ -159,15 +171,12 @@ contains
        nrtot=d%nrt(ndim)
     endif
     !
-    nrx=d%nr+1
     do alpha=1,d%nstati
       rwx=rw(:,alpha)
-      !call fftn(rwx,Shape(rwx))
-      call fftn(rwx,nrx)
+      call fft_fwrd(rwx,nrx)
       rwx(1:nrtot)=rwx(1:nrtot)*d%fftkin(1:nrtot)
       !
-      !call fftn(rwx,Shape(rwx),inv=.true.)
-      call fftn(rwx,nrx,inv=.true.)
+      call fft_bwrd(rwx,nrx)
       rw(:,alpha)=rwx
     end do
   end subroutine split_kin
@@ -197,7 +206,6 @@ contains
   end subroutine wrtgrd
   !-------------------------------------------------------------
   subroutine quant_resu(d,rw,hel,istep,iw)
-    use singleton
     implicit none
     type (discr), intent (in)                           :: d
     type (hamil), intent (in)                           :: hel
@@ -208,8 +216,7 @@ contains
     integer                :: alpha,i,i1,ab,ip,im,beta,abg,iini,iend
     integer, save          :: ifirst=0, iwpf, ndim, nrtot
     real (kind=dpr), save  :: drtot
-    complex (kind=dpc), dimension(size(rw,1)) :: bra,ket,rwfft
-    integer, dimension (size(d%nr,1))         :: nrx
+    complex (kind=dpc), dimension(size(rw,1)) :: bra,ket
     real (kind=dpr), dimension(d%nstati)      :: pop, ek, pop_dia
     real (kind=dpr)        :: ttotfs,epot,ekin,epx,etot,pp,rx
     logical, save          :: adiab
@@ -252,11 +259,10 @@ contains
        ek=zero
        epot=zero
        ab=0
-       nrx=d%nr+1
        do alpha=1,d%nstati
-          rwfft=rw(:,alpha)
-          call fftn(rwfft,nrx)
-          ek(alpha)=sum(d%fftkin2(:)*abs(rwfft(:))**2)*drtot
+          rwx=rw(:,alpha)
+          call fft_fwrd(rwx,nrx)
+          ek(alpha)=sum(d%fftkin2(:)*abs(rwx(:))**2)*drtot
           bra=conjg(rw(:,alpha))
           do beta=1,alpha
              ab=ab+1
