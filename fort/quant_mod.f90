@@ -50,10 +50,6 @@ contains
     allocate (rwx(nr1),nrx(d%ndim))
     !
     call fft_ini(d,rwx,nrx)
-    !!nrinv(1:d%ndim) = d%nr(d%ndim:1:-1) + 1
-    !!planf = fftw_plan_dft(d%ndim,nrinv,rwx,rwx,FFTW_FORWARD,FFTW_MEASURE)
-    !!planb = fftw_plan_dft(d%ndim,nrinv,rwx,rwx,FFTW_BACKWARD,FFTW_MEASURE)
-    !!fftw3_fac = 1.0_dpr/sqrt(real(nr1,kind=dpr))
     !
     d%t0 = 0.0_dpr
     call ini_wp(d,rw)
@@ -73,8 +69,7 @@ contains
     end do
     !
     call fft_end
-    !!call fftw_destroy_plan(planf)
-    !!call fftw_destroy_plan(planb)
+    !
     deallocate (rwx,nrx)
     deallocate (rw)
     deallocate (hel%uteu)
@@ -149,7 +144,7 @@ contains
       rw(i,:)=matmul(hel%uteu(i,:,:),rw(i,:))
     end do
     !
-    call split_kin(d,hel,rw)
+    call split_kin(d,rw)
     !
     do i=1,nrtot
       rw(i,:)=matmul(hel%uteu(i,:,:),rw(i,:))
@@ -157,10 +152,9 @@ contains
     ! 
   end subroutine split_op
   !-------------------------------------------------------------
-  subroutine split_kin(d,hel,rw)
+  subroutine split_kin(d,rw)
     implicit none
     type (discr), intent (in)                           :: d
-    type (hamil), intent (in)                           :: hel
     complex (kind=dpc), dimension (:,:), intent (inout) :: rw
     integer :: alpha
     integer, save :: ifirst=0, ndim, nrtot

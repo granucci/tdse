@@ -35,6 +35,8 @@ program quant_ev
 !                        FILE_WP: si continua un'evoluzione temporale 
 !                        effettuata in precedenza. I nuovi risultati
 !                        vengono appesi alla fine del file FILE_WP.
+!                 'read' pacchetto iniziale letto dal file formattato 
+!                        specificato in FILE_INIWP.
 ! OMEGA         = vedere WPACK.
 ! R0            = vedere WPACK.
 ! P0            = vedere WPACK.
@@ -42,6 +44,15 @@ program quant_ev
 !                 energie e accoppiamenti, in rappresentazione diabatica. 
 !                 Si veda il modulo "quant_sys" per la struttura di tale
 !                 file.
+! FILE_INIWP    = nome del file formattato (di input) dal quale viene letto 
+!                 il pacchetto iniziale se WPACK='read'. FILE_INIWP e` 
+!                 costituito da tanti record quanti sono i punti della 
+!                 griglia; ogni record e` del tipo:
+!                 r  wpx
+!                 dove r(1:ndim) contiene il valore delle coordinate nel dato
+!                 punto della griglia e "wpx" e` il valore (reale) del pacchetto
+!                 d'onda nel punto considerato per lo stato ISTATI.
+!                 Solo se WPACK='read'.
 ! HCOMPLEX      = F, l'hamiltoniano diabatico e` reale (default);
 !                 T, l'hamiltoniano diabatico e` complesso.
 ! ADIABATIZE    = 0 cond. iniziali e risultati in rappr. diabatica (Default).
@@ -116,7 +127,7 @@ program quant_ev
   integer               :: iwrt,adiabatize,lasertyp,lasercw
   logical               :: hcomplex,radiation
   real(kind=dpr)        :: time,ene_add,thrwp,omega0
-  character (len=120)   :: file_mol,file_wp,file_dip
+  character (len=120)   :: file_mol,file_wp,file_dip,file_iniwp
   character (len=10)    :: wpack
   real(kind=dpr), dimension(3)     :: e0
   real(kind=dpr), dimension(20)    :: laserparm
@@ -125,7 +136,7 @@ program quant_ev
   namelist /DAT/ rmin,rmax,nr,massa,nstati,time,tcycles,file_wp,wpack, &
    &  omega,r0,p0,istati,file_mol,nprt,ene_add,thrwp,nprt_wp, &
    &  iwrt,adiabatize,ndim,hcomplex, &
-   &  radiation,omega0,e0,lasertyp,lasercw,laserparm,file_dip
+   &  radiation,omega0,e0,lasertyp,lasercw,laserparm,file_dip,file_iniwp
   type (discr)          :: d
   integer               :: iw,i,nrtot
   !
@@ -203,6 +214,12 @@ program quant_ev
      open(d%filewp,file=file_wp,form='unformatted',status='unknown')
   endif
   rewind d%filewp
+  !
+  if (d%wpack == 'read') then
+     d%fileiniwp=8
+     open(d%fileiniwp,file=file_iniwp,form='formatted',status='old')
+     rewind d%fileiniwp
+  endif
   !
   if (d%radiation) then
      d%lsr%filed = 4

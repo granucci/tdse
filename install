@@ -4,21 +4,23 @@
 # TDSE installation 
 # -----------------
 #
-# Normally only the first four statements have to be checked
+# Normally only the first four settings have to be checked
 # and, if necessary, changed:
 #
-#   FFTW         = version of the FFTW package (ex. fftw-3.3.4)
+#   FFTW         = version of the FFTW package (ex. fftw-3.3.4).
 #                  If it is not found, a slower internal routine 
-#                  (singleton) will be used for FFT.
+#                  (singleton) is used for FFT.
 #   fc           = fortran compiler (ex. ifort)
 #   fflags       = compilations flags for the fortran compiler
 #   ldflags      = link flags for the fortran linker
 #================================================================
 #
+#----------------------------------------------------------------
 setenv FFTW    fftw-3.3.4
 setenv fc      ifort
 setenv fflags  -O2
 setenv ldflags -static
+#----------------------------------------------------------------
 #
 set cppdefs=""
 set fftwinc=""
@@ -31,9 +33,6 @@ endif
 #
 if (-e ${FFTW}.tar.gz) then
    setenv fftw_install $PWD/fftw/${FFTW}/installdir
-   set cppdefs="-DFFTW3"
-   set fftwinc="-I${fftw_install}/include"
-   set fftwlib="-L${fftw_install}/lib -lfftw3"
    mkdir fftw
 #
    cd fftw
@@ -46,9 +45,13 @@ if (-e ${FFTW}.tar.gz) then
        make install >>&install.log
      cd ..
    cd ..
+   set lib=`ls ${fftw_install}|grep lib`
+   set cppdefs="-DFFTW3"
+   set fftwinc="-I${fftw_install}/include"
+   set fftwlib="-L${fftw_install}/${lib} -lfftw3"
 #
    set mv=`echo $FFTW|cut -d '-' -f 2|cut -d '.' -f 1`
-   if (!(-s ${fftw_install}/lib/libfftw${mv}.a)) then
+   if (!(-s ${fftw_install}/${lib}/libfftw${mv}.a)) then
       echo " Problems detected with ${FFTW}  ..."
       echo " The (slower) Singleton module for FFT will be used instead"
       set cppdefs=""

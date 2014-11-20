@@ -16,7 +16,7 @@ module quant_util
   type discr
      integer           :: ndim
      integer           :: nstati,tcycles,nprt,istati,filem,nprt_wp
-     integer           :: filewp,iwrt,adiabatize
+     integer           :: filewp,iwrt,adiabatize,fileiniwp
      logical           :: hcomplex,radiation
      real(kind=dpr)    :: time,ene_add,thrwp
      real(kind=dpr)    :: t0,ttot

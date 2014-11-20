@@ -5,6 +5,8 @@ module quant_sys
   public :: ini_wp, hmol
   private
 
+  real (kind=dpr), parameter :: eps=1.e-8_dpr
+
 contains
   !-------------------------------------------------------------
   subroutine ini_wp(d,rw)
@@ -14,7 +16,7 @@ contains
     complex (kind=dpc), parameter :: zzero = (0.0_dpr,0.0_dpr)
     complex (kind=dpc)  :: val
     character (len=120) :: fnam
-    real (kind=dpr)     :: dum,fac2t,pi,rp
+    real (kind=dpr)     :: dum,fac2t,pi,rp,wpx
     real (kind=dpr), dimension (d%ndim) :: omega,fac1,fac2,r,rr
     integer             :: i,alpha,icod,ndim,nrtot
     !
@@ -60,6 +62,18 @@ contains
        write(6,'(2a)') ' Letti dal file ',trim(fnam)
        write(6,'(a,i8,a,f15.6/)') ' step =',i,' time (fs)=',d%t0
        d%t0=d%t0*fstoau
+    elseif (d%wpack == 'read') then
+       do i=1,nrtot
+         r(:) = d%rmin(1:ndim) + (d%inddim(i,1:ndim)-1)*d%dr(1:ndim)
+         read(d%fileiniwp,*) rr,wpx
+         rw(i,d%istati)=cmplx(wpx,0.0_dpr,kind=dpc)
+       end do
+       if (sum(abs(r-rr)) > eps) then
+          write(6,'(a)') ' ERRORE IN INI_WP: rx DIVERSO DA r.'
+          write(6,*)     ' r =',r
+          write(6,*)     ' rx=',rr
+          stop 12
+       endif
     else
        write(6,'(3a)') ' wpack=',d%wpack,' non permesso'
        write(6,'(a)') ' ..... stop'
@@ -71,7 +85,6 @@ contains
     implicit none
     type (discr), intent (inout) :: d
     type (hamil), intent (inout) :: hx
-    real (kind=dpr), parameter :: eps=1.e-8_dpr
     integer         :: i,j,k,kk,nstati,nstri
     integer         :: ndim,nrtot
     real (kind=dpr), dimension (d%ndim) :: r,rx
