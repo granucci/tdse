@@ -32,7 +32,7 @@ if (!(-e ${FFTW}.tar.gz)) then
 endif
 #
 if (-e ${FFTW}.tar.gz) then
-   setenv fftw_install $PWD/fftw/${FFTW}/installdir
+   setenv fftw_install $PWD/fftw/${FFTW}_installdir
    mkdir fftw
 #
    cd fftw
