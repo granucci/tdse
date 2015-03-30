@@ -75,9 +75,9 @@ program quant_ev
 !                   NDIM=1 i pacchetti vengono anche scritti
 !                   sul file formattato 'WP'.
 !               > 2 si scrivono le energie adiabatiche (griglia).
-!               > 3 si scrivono le pop. e le energie cinetiche degli
-!                   stati diabatici (qualunque sia la rappr. nella quale
-!                   vengono dati i risultati).
+!               > 3 si scrivono, nella base diabatica (qualunque sia il
+!                   valore di ADIABATIZE), le popolazioni, le energie 
+!                   cinetiche e la matrice dell'energia potenziale.
 !               > 9 si scrive la griglia e si interrompe
 !                   il calcolo (utile per NDIM > 1).
 ! THRWP         = soglia per la scrittura dei pacchetti sul file
@@ -86,6 +86,11 @@ program quant_ev
 !                 a) da una popolazione maggiore di THRWP
 !                 b) compresi fra due punti con una popolazione 
 !                    maggiore di THRWP.
+! THR_ABSPOT    = soglia per l'applicazione del potenziale assorbente.
+!                 Se il valore assoluto del potenziale assorbente 
+!                 (parte immaginaria dei termini diagonali dell'hamiltoniano 
+!                 diabatico) e` maggiore di THR_ABSPOT, allora lo si applica.
+!                 Rilevante solo se HCOMPLEX=T. Default, THR_ABSPOT=1.d-7.
 ! RADIATION     = F, calcolo normale (default);
 !                 T, interazione con la radiazione.
 !---- keywords rilevanti solo per RADIATION=T -------------------------
@@ -126,7 +131,7 @@ program quant_ev
   integer               :: nstati,tcycles,nprt,istati,nprt_wp
   integer               :: iwrt,adiabatize,lasertyp,lasercw
   logical               :: hcomplex,radiation
-  real(kind=dpr)        :: time,ene_add,thrwp,omega0
+  real(kind=dpr)        :: time,ene_add,thrwp,omega0,thr_abspot
   character (len=120)   :: file_mol,file_wp,file_dip,file_iniwp
   character (len=10)    :: wpack
   real(kind=dpr), dimension(3)     :: e0
@@ -135,7 +140,7 @@ program quant_ev
   real(kind=dpr), dimension (mdim) :: rmin,rmax,massa,omega,r0,p0
   namelist /DAT/ rmin,rmax,nr,massa,nstati,time,tcycles,file_wp,wpack, &
    &  omega,r0,p0,istati,file_mol,nprt,ene_add,thrwp,nprt_wp, &
-   &  iwrt,adiabatize,ndim,hcomplex, &
+   &  iwrt,adiabatize,ndim,hcomplex,thr_abspot, &
    &  radiation,omega0,e0,lasertyp,lasercw,laserparm,file_dip,file_iniwp
   type (discr)          :: d
   integer               :: iw,i,nrtot
@@ -147,6 +152,7 @@ program quant_ev
   wpack         = 'gauss'
   ene_add       = 0.0_dpr
   thrwp         = 0.0_dpr
+  thr_abspot    = 1.e-7_dpr
   adiabatize    = 0
   file_wp       = 'WPTOT'
   iwrt          = 0
@@ -154,6 +160,7 @@ program quant_ev
   radiation     = .false.
   lasercw       = 0
   file_dip      = ''
+  file_iniwp    = ''
   read(5,DAT)
   if (nprt_wp == -1) nprt_wp = nprt
   write(6,DAT)
@@ -180,6 +187,7 @@ program quant_ev
   d%wpack       = wpack
   d%ene_add     = ene_add
   d%thrwp       = thrwp
+  d%thr_abspot  = thr_abspot
   d%adiabatize  = adiabatize
   d%iwrt        = iwrt
   d%hcomplex    = hcomplex

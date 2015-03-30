@@ -107,7 +107,9 @@ contains
        r(:) = d%rmin(1:ndim) + (d%inddim(i,1:ndim)-1)*d%dr(1:ndim)
        !r=d%r_dim(i,:)
        if (d%hcomplex) then
-          read(d%filem,*) rx,(hx%h_c(i,k),k=1,nstri)
+          !read(d%filem,*) rx,(hx%h_c(i,k),k=1,nstri)
+          read(d%filem,*) rx,(wd(k,1),wd(k,2),k=1,nstri)
+          hx%h_c(i,1:nstri)=cmplx(wd(1:nstri,1),wd(1:nstri,2),kind=dpc)
        else
           read(d%filem,*) rx,(hx%h(i,k),k=1,nstri)
        endif
@@ -156,12 +158,14 @@ contains
     type (hamil), intent (inout) :: hx
     real (kind=dpr), dimension (d%ndim)               :: r
     real (kind=dpr), dimension (d%nstati)             :: e
+    real (kind=dpr), dimension (d%nstati)             :: abspot
     real (kind=dpr), dimension (3*d%nstati)           :: rw
     real (kind=dpr), dimension (d%nstati,d%nstati)    :: ah,u,ut
     complex (kind=dpr), dimension (d%nstati,d%nstati) :: ahc,uc,utc
     complex (kind=dpc), dimension (d%nstati,d%nstati) :: ute
     complex (kind=dpc), dimension (d%nstati*d%nstati) :: w
     complex (kind=dpc) :: vx
+    real (kind=dpr)    :: vxr
     real (kind=dpr)    :: dh,dscr,e1,e2,num,den,ang,c,s,h11,h12,h22
     integer            :: i,j,k,kj,nstati,ndim,nrtot,alpha,lw,info
     !
@@ -169,7 +173,8 @@ contains
     !
     ndim  = d%ndim
     nrtot = d%nrt(ndim)
-    vx=cmplx(0,1,kind=dpc)*d%time*0.5_dpr
+    vxr=d%time*0.5_dpr
+    vx=cmplx(0,1,kind=dpc)*vxr
     lw=nstati**2
     !
     if (d%iwrt > 2) then
@@ -186,6 +191,8 @@ contains
                 ahc(k,j)=conjg(hx%h_c(i,kj))
                 !write(6,*) 'i,j,k,ahc(j,k)',i,j,k,ahc(j,k)
              end do
+             abspot(j)=-aimag(ahc(j,j))
+             ahc(j,j)=cmplx(real(ahc(j,j)),0,kind=dpc)
           end do
           call zheev('V','L',nstati,ahc,nstati,e,w,lw,rw,info)
           uc = conjg(transpose(ahc))
@@ -199,6 +206,14 @@ contains
              ute(:,alpha)=utc(:,alpha)*exp(-vx*hx%e(i,alpha))
           end do
           hx%uteu(i,:,:)=matmul(ute,uc)
+          !
+          ! absorbing potential (diagonal imaginary term in the diabatic hamiltonian)
+          if (maxval(abs(abspot)) > d%thr_abspot) then
+             abspot=exp(vxr*abspot)
+             do j=1,nstati
+                hx%uteu(i,j,:)=hx%uteu(i,j,:)*abspot(:)
+             end do
+          endif
           !
           if (d%iwrt > 2) then
              write(6,"(20f15.8)") r,hx%e(i,:)

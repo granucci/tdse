@@ -212,7 +212,8 @@ contains
     real (kind=dpr), save  :: drtot
     complex (kind=dpc), dimension(size(rw,1)) :: bra,ket
     real (kind=dpr), dimension(d%nstati)      :: pop, ek, pop_dia
-    real (kind=dpr)        :: ttotfs,epot,ekin,epx,etot,pp,rx
+    real (kind=dpr), dimension((d%nstati*d%nstati+d%nstati)/2)  :: epx
+    real (kind=dpr)        :: ttotfs,epot,ekin,etot,pp,rx
     logical, save          :: adiab
     logical                :: zwrt_e
     !
@@ -233,9 +234,10 @@ contains
           write(iw,'(a,2(15x,a),20x,2(15x,a))') &
                & '  Step', 'Time (fs)','pop','Etot','Ekin (diabatic)'
        elseif (d%iwrt > 3) then
-          write(iw,'(a,2(15x,a),20x,3(15x,a))') &
+          write(iw,'(a,2(15x,a),20x,4(15x,a))') &
                & '  Step', 'Time (fs)','pop','Etot','Ekin (diabatic)', &
-               & '  pop (diabatic)        Ekin on diabats'
+               & '  pop (diabatic)        Ekin on diabats', &
+               & '  Epot on diabats, triangular'
        else
           write(iw,'(a,2(15x,a))') &
                & '  Step', 'Time (fs)','pop'
@@ -262,14 +264,14 @@ contains
              ab=ab+1
              ket=rw(:,beta)
              if (d%hcomplex) then
-                epx=real(sum(bra(:)*hel%h_c(:,ab)*ket(:)),kind=dpr)*drtot
+                epx(ab)=real(sum(bra(:)*hel%h_c(:,ab)*ket(:)),kind=dpr)*drtot
              else
-                epx=real(sum(bra(:)*hel%h(:,ab)*ket(:)),kind=dpr)*drtot
+                epx(ab)=real(sum(bra(:)*hel%h(:,ab)*ket(:)),kind=dpr)*drtot
              endif
              if (beta /= alpha) then
-               epx=epx*2.0_dpr
+               epx(ab)=epx(ab)*2.0_dpr
              endif
-             epot=epot+epx
+             epot=epot+epx(ab)
           end do
        end do
        ekin=sum(ek)
@@ -298,7 +300,7 @@ contains
     else
        if (d%iwrt > 3) then
           write(iw,'(i10,50f20.10)') &
-            & istep,ttotfs,pop,etot,ekin,pop_dia,ek
+            & istep,ttotfs,pop,etot,ekin,pop_dia,ek,epx
        else
           write(iw,'(i10,50f20.10)') istep,ttotfs,pop,etot,ekin
        endif

@@ -18,7 +18,7 @@ module quant_util
      integer           :: nstati,tcycles,nprt,istati,filem,nprt_wp
      integer           :: filewp,iwrt,adiabatize,fileiniwp
      logical           :: hcomplex,radiation
-     real(kind=dpr)    :: time,ene_add,thrwp
+     real(kind=dpr)    :: time,ene_add,thrwp,thr_abspot
      real(kind=dpr)    :: t0,ttot
      character(len=10) :: wpack
      integer, allocatable, dimension (:)        :: nr,nrt
