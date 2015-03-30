@@ -100,8 +100,7 @@ program quant_ev
 !                 schede per le tre componenti del dipolo.
 ! E0            = vettore tridimensionale che fornisce l'ampiezza 
 !                 massima del campo elettrico.
-! OMEGA0        = frequenza dell'onda portante. Per il momento la sola
-!                 onda portante implementata e` del tipo cos(OMEGA0*t).
+! OMEGA0        = frequenza dell'onda portante. Vedi LASERCW.
 ! LASERCW       = 0, onda portante tipo cos(OMEGA0*t), default;
 !                 1, onda portante tipo sin(OMEGA0*t).
 ! LASERTYP      = intero che specifica la forma analitica dell'inviluppo.
