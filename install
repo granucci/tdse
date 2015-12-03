@@ -48,10 +48,10 @@ if (-e ${FFTW}.tar.gz) then
    set lib=`ls ${fftw_install}|grep lib`
    set cppdefs="-DFFTW3"
    set fftwinc="-I${fftw_install}/include"
-   set fftwlib="-L${fftw_install}/${lib} -lfftw3"
+   set fftwlib="-L${fftw_install}/${lib[1]} -lfftw3"
 #
    set mv=`echo $FFTW|cut -d '-' -f 2|cut -d '.' -f 1`
-   if (!(-s ${fftw_install}/${lib}/libfftw${mv}.a)) then
+   if (!(-s ${fftw_install}/${lib[1]}/libfftw${mv}.a)) then
       echo " Problems detected with ${FFTW}  ..."
       echo " The (slower) Singleton module for FFT will be used instead"
       set cppdefs=""
