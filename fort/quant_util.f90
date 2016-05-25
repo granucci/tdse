@@ -26,15 +26,15 @@ module quant_util
      real(kind=dpr), allocatable, dimension (:) :: massa,omega,r0,p0
      integer, allocatable, dimension (:,:)          :: inddim
      complex (kind=dpc), allocatable, dimension (:) :: fftkin
-     real (kind=dpc), allocatable, dimension (:)    :: fftkin2
+     real (kind=dpr), allocatable, dimension (:)    :: fftkin2
      type(laser) :: lsr
   end type discr
   !
   type hamil
      real(kind=dpr), allocatable    :: h(:,:)
      real(kind=dpr), allocatable    :: dia(:,:,:)
-     complex(kind=dpr), allocatable :: h_c(:,:)
-     complex(kind=dpr), allocatable :: dia_c(:,:,:)
+     complex(kind=dpc), allocatable :: h_c(:,:)
+     complex(kind=dpc), allocatable :: dia_c(:,:,:)
      real(kind=dpr), allocatable    :: e(:,:)
      complex(kind=dpc), allocatable :: uteu(:,:,:)
      real(kind=dpr), allocatable    :: edip(:,:)
@@ -85,8 +85,8 @@ contains
     type(discr), intent (inout) :: d 
     complex (kind=dpc), dimension (d%ndim) :: dw
     complex (kind=dpc)                     :: fac
-    real (kind=dpc), dimension (d%ndim)    :: dw2
-    real (kind=dpc)                        :: fac2
+    real (kind=dpr), dimension (d%ndim)    :: dw2
+    real (kind=dpr)                        :: fac2
     real (kind=dpr)                        :: pi,denom,due
     integer, dimension (d%ndim)            :: nr1,nr2,ix,indkin
     integer                                :: i,j,ndim,nrtot

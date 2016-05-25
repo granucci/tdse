@@ -161,7 +161,7 @@ contains
     real (kind=dpr), dimension (d%nstati)             :: abspot
     real (kind=dpr), dimension (3*d%nstati)           :: rw
     real (kind=dpr), dimension (d%nstati,d%nstati)    :: ah,u,ut
-    complex (kind=dpr), dimension (d%nstati,d%nstati) :: ahc,uc,utc
+    complex (kind=dpc), dimension (d%nstati,d%nstati) :: ahc,uc,utc
     complex (kind=dpc), dimension (d%nstati,d%nstati) :: ute
     complex (kind=dpc), dimension (d%nstati*d%nstati) :: w
     complex (kind=dpc) :: vx

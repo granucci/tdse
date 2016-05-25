@@ -7,8 +7,8 @@ program rd_resu
   real (kind=dpr)     :: ti,tini,tend,rmin,drtot,rdiss
   type (discr)        :: d
   complex (kind=dpc), allocatable, dimension (:,:) :: rw
-  real (kind=dpc), allocatable, dimension (:)      :: r
-  real (kind=dpc), allocatable, dimension (:)      :: ek,pop
+  real (kind=dpr), allocatable, dimension (:)      :: r
+  real (kind=dpr), allocatable, dimension (:)      :: ek,pop
   !
   narg = command_argument_count()
   if (narg <= 1) then
