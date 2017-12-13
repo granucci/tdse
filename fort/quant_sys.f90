@@ -16,7 +16,7 @@ contains
     complex (kind=dpc), parameter :: zzero = (0.0_dpr,0.0_dpr)
     complex (kind=dpc)  :: val
     character (len=120) :: fnam
-    real (kind=dpr)     :: dum,fac2t,pi,rp,wpx
+    real (kind=dpr)     :: dum,fac2t,pi,rp,wpr,wpi
     real (kind=dpr), dimension (d%ndim) :: omega,fac1,fac2,r,rr
     integer             :: i,alpha,icod,ndim,nrtot
     !
@@ -65,8 +65,8 @@ contains
     elseif (d%wpack == 'read') then
        do i=1,nrtot
          r(:) = d%rmin(1:ndim) + (d%inddim(i,1:ndim)-1)*d%dr(1:ndim)
-         read(d%fileiniwp,*) rr,wpx
-         rw(i,d%istati)=cmplx(wpx,0.0_dpr,kind=dpc)
+         read(d%fileiniwp,*) rr,wpr,wpi
+         rw(i,d%istati)=cmplx(wpr,wpi,kind=dpc)
        end do
        if (sum(abs(r-rr)) > eps) then
           write(6,'(a)') ' ERRORE IN INI_WP: rx DIVERSO DA r.'
