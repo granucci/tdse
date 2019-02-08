@@ -213,6 +213,7 @@ contains
     complex (kind=dpc), dimension(size(rw,1)) :: bra,ket
     real (kind=dpr), dimension(d%nstati)      :: pop, ek, pop_dia
     real (kind=dpr), dimension((d%nstati*d%nstati+d%nstati)/2)  :: epx
+    real (kind=dpr), allocatable, dimension(:,:)  :: e_pes
     real (kind=dpr)        :: ttotfs,epot,ekin,etot,pp,rx
     logical, save          :: adiab
     logical                :: zwrt_e
@@ -225,9 +226,26 @@ contains
        adiab=(d%adiabatize == 1).or.(d%adiabatize == 2)
        !
        if (d%wpack /= 'old') then
+          allocate(e_pes(nrtot,d%nstati))
+          if (adiab) then
+            e_pes=hel%e
+          else
+            if (d%hcomplex) then
+              do alpha=1,d%nstati
+                ab=(alpha*alpha+alpha)/2
+                e_pes(1:nrtot,alpha)=hel%h_c(1:nrtot,ab)
+              end do
+            else
+              do alpha=1,d%nstati
+                ab=(alpha*alpha+alpha)/2
+                e_pes(1:nrtot,alpha)=hel%h(1:nrtot,ab)
+              end do
+            endif
+          endif
           write(d%filewp)d%ndim,d%nstati,d%istati,d%hcomplex,d%adiabatize
           write(d%filewp)d%rmin,d%dr,d%nrt,d%massa,d%omega,d%r0,d%p0
-          write(d%filewp)d%inddim
+          write(d%filewp)d%inddim,e_pes
+          deallocate (e_pes)
        endif
        !       
        if (d%iwrt > 0 .and. d%iwrt <= 3) then
