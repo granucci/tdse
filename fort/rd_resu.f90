@@ -3,13 +3,13 @@ program rd_resu
   implicit none
   complex (kind=dpc), parameter :: zzero  = (0.0_dpr,0.0_dpr)
   character (len=120) :: filewp,card
-  integer             :: narg,k,icod,ndim,nrtot,nstati,a,i
+  integer             :: narg,k,icod,ndim,nrtot,nstati,a,i,j
   real (kind=dpr)     :: ti,tini,tend,rmin,drtot,rdiss
   type (discr)        :: d
   complex (kind=dpc), allocatable, dimension (:,:) :: rw
   real (kind=dpr), allocatable, dimension (:)      :: r
-  real (kind=dpr), allocatable, dimension (:)      :: ek,ep,pop,ravg,rsd
-  real (kind=dpr), allocatable, dimension (:,:)    :: e_pes
+  real (kind=dpr), allocatable, dimension (:)      :: ek,ep,pop
+  real (kind=dpr), allocatable, dimension (:,:)    :: e_pes,ravg,rsd
   !
   narg = command_argument_count()
   if (narg <= 1) then
@@ -43,7 +43,7 @@ program rd_resu
   !
   allocate (rw(nrtot,nstati),r(ndim))
   allocate (ek(nstati),ep(nstati),pop(nstati))
-  allocate (rsd(nstati),ravg(nstati))
+  allocate (rsd(ndim,nstati),ravg(ndim,nstati))
   !
   open(2,file='WPDATA',form='formatted',status='unknown')
   rewind 2
@@ -68,9 +68,12 @@ program rd_resu
     if (icod /= 0) exit
     if (ti >= tini .and. ti < tend) then
        call ekin(rw,ek,ep,pop)
+       call rcalc(rw,pop,ravg,rsd)
        write(2,'(a,i8,a,f15.6,a,e18.9)')'   step=',k,'  time (fs)=',ti,' ekin=',sum(ek)
-       write(2,'(a)') ' State      pop       ekin           epot'
-       write(2,'(i6,f12.6,2e18.9)') (i,pop(i),ek(i),ep(i),i=1,nstati)
+       write(2,'(a)') ' State      pop       ekin           epot                  <r>            r_sd'
+       do i=1,nstati
+          write(2,'(i6,f12.6,50E18.9)') i,pop(i),ek(i),ep(i),(ravg(j,i),rsd(j,i),j=1,ndim)
+       end do
        write(6,'(a,i8,a,f15.6,a,20f12.6)')'#   step=',k,'  time (fs)=',ti,' pop=',pop
        do i=1,nrtot
          r(:) = d%rmin(1:ndim) + (d%inddim(i,1:ndim)-1)*d%dr(1:ndim)
@@ -79,8 +82,8 @@ program rd_resu
        if (rdiss > 0.0_dpr .and. ndim == 1) then
           call diss(rw,rdiss,ek,ep,pop,ravg,rsd)
           write(2,'(a,f12.6,a)') ' At dissociation (r >',rdiss,')'
-          write(2,'(a)') ' State      pop       ekin          epot                  <r>            r_sd'
-          write(2,'(i6,f12.6,4e18.9)') (i,pop(i),ek(i),ep(i),ravg(i),rsd(i),i=1,nstati)
+          write(2,'(a)') ' State      pop       ekin           epot                  <r>            r_sd'
+          write(2,'(i6,f12.6,4e18.9)') (i,pop(i),ek(i),ep(i),ravg(1,i),rsd(1,i),i=1,nstati)
        endif
        if (narg == 2) then
           exit
@@ -110,10 +113,39 @@ contains
 
   end subroutine ekin
   !****************************************************************************
+  subroutine rcalc(rw,pop,ravg,rsd)
+    implicit none
+    complex (kind=dpc), dimension (:,:), intent (in) :: rw
+    real (kind=dpr), dimension (:), intent (in)      :: pop
+    real (kind=dpr), dimension (:,:), intent (inout) :: ravg,rsd
+    real (kind=dpr), dimension (nrtot)    :: r
+    integer :: alpha,jdim
+
+    do jdim=1,ndim
+       r(1:nrtot) = d%rmin(jdim) + (d%inddim(1:nrtot,jdim)-1)*d%dr(jdim)
+       do alpha=1,d%nstati
+          ravg(jdim,alpha)=sum(r(:)*abs(rw(:,alpha))**2)*drtot
+          rsd(jdim,alpha)=sum(r(:)**2*abs(rw(:,alpha))**2)*drtot
+       end do
+    end do
+
+    do alpha=1,d%nstati
+       if (pop(alpha) < 1.e-10_dpr) then
+          ravg(1:ndim,alpha) = 0.0_dpr
+          rsd(1:ndim,alpha) = 0.0_dpr
+       else
+          ravg(1:ndim,alpha) = ravg(1:ndim,alpha)/pop(alpha)
+          rsd(1:ndim,alpha) = rsd(1:ndim,alpha)/pop(alpha)
+       endif
+    end do
+    rsd=sqrt(rsd-ravg**2)
+  end subroutine rcalc
+  !****************************************************************************
   subroutine diss(rw,rdiss,ek,ep,pop,ravg,rsd)
     implicit none
     complex (kind=dpc), dimension (:,:), intent (inout) :: rw
-    real (kind=dpr), dimension (:), intent (inout)      :: ek,ep,pop,ravg,rsd
+    real (kind=dpr), dimension (:), intent (inout)      :: ek,ep,pop
+    real (kind=dpr), dimension (:,:), intent (inout)    :: ravg,rsd
     real (kind=dpr), intent (inout)                     :: rdiss
     real (kind=dpr), dimension (nrtot)    :: r
     integer :: alpha
@@ -126,20 +158,7 @@ contains
     end do
 
     call ekin(rw,ek,ep,pop)
-
-    do alpha=1,d%nstati
-       ravg(alpha)=sum(r(:)*abs(rw(:,alpha))**2)*drtot
-       rsd(alpha)=sum(r(:)**2*abs(rw(:,alpha))**2)*drtot
-    end do
-
-    where (pop < 1.e-10_dpr) 
-      ravg = 0.0_dpr
-      rsd = 0.0_dpr
-    elsewhere
-      ravg = ravg/pop
-      rsd = rsd/pop
-    end where
-    rsd=sqrt(rsd-ravg**2)
+    call rcalc(rw,pop,ravg,rsd)
 
   end subroutine diss
   !****************************************************************************
