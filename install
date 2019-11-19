@@ -19,7 +19,7 @@
 setenv FFTW    fftw-3.3.4
 setenv fc      ifort
 setenv fflags  -O2
-setenv ldflags -static
+setenv ldflags 
 #----------------------------------------------------------------
 #
 set cppdefs=""
