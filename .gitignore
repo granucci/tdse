@@ -1,0 +1,21 @@
+#ignore generated objects and executables in fort
+fort/*.o
+fort/*.mod
+fort/quant_ev
+fort/rd_resu
+ 
+#ignore generated latex files
+doc/*.aux
+doc/*.dvi
+doc/*.idx
+doc/*.ilg
+doc/*.ind
+doc/*.log
+doc/quant_ev.pdf
+
+#ignore generated make options
+make.defs
+
+#ignore fftw files
+fftw/
+fftw*.tar.gz

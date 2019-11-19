@@ -1,0 +1,127 @@
+\documentclass[12pt,fleqn]{article}
+\usepackage[body={16cm,24cm}]{geometry}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{scrextend}
+\usepackage{verbatim}
+\usepackage{alltt}
+
+\setlist{noitemsep}
+\setkomafont{labelinglabel}{\normalfont\bfseries}
+\setkomafont{labelinglabel}{\tt\bfseries}
+
+\newcommand{\Nomeprog}{\sf QUANT\_EV}
+\newcommand{\nomeprog}{\sf quant\_ev}
+\newcommand{\hzero}{\rm {\bf H}_{el}^0}
+\newcommand{\huno}{\rm {\bf H}_{el}^1}
+\newcommand{\Diff}{\Delta\!}
+\newenvironment{compactlist}[3]
+  {\begin{list}{#1}{\setlength{\leftmargin}{#2em}
+                \setlength{\itemsep}{#3ex}
+                \setlength{\topsep}{0ex}
+                \setlength{\parsep}{0ex}}}
+  {\end{list}}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{2ex}
+%\setlength{\topsep}{0ex}
+\setlength{\unitlength}{1mm}
+%\nohyp
+\sloppy
+ 
+\begin{document}
+ 
+\begin{center}
+  \large \textbf{PROGRAM} \Nomeprog
+\end{center}
+
+Numerical integration of the TDSE for a molecular sistem on a grid. 
+The number of dimensions (r) and of electronic states is, in principle, not
+limited.
+
+The program reads as input the electronic Hamiltonian in the diabatic basis,
+and the time evolution is performed with the Split-Operator method.
+
+Unless otherwise specified, all data are given in atomic units.
+
+%\begin{description}[align=left,labelwidth=3cm]
+\begin{labeling}{NAMELIST \&DAT}
+  \setlength{\itemsep}{-0.7ex}
+  \item[NAMELIST \&DAT]
+  \item[NDIM]  number of coordinates.
+  \item[RMIN]  minimum values for the coordinates (vector of dimension \texttt{NDIM})
+  \item[RMAX]  maximum values for the coordinates (vector of dimension \texttt{NDIM})
+  \item[NR]  number of grid points along each coordinate (vector of dimension \texttt{NDIM}). The distance between
+    two consecutive point of the grid is dr=(\texttt{RMAX}-\texttt{RMIN})/NR.
+  \item[MASSA]  for each coordinate, value of the (reduced) mass (vector of dimension \texttt{NDIM}).
+  \item[NSTATI]  number of states.
+  \item[ISTATI]  starting state, to which the starting wavepacket is associated. Such a state is in the
+    diabatic representation if \texttt{ADIABATIZE} $<2$, otherwise is in the adiabatic representation.
+  \item[TIME]  integration time step.
+  \item[TCYCLES]  total number of time steps.
+  \item[FILE\_WP]  name of the unformatted output file containing the results of the time evolution.
+    Default: \texttt{FILE\_WP=WPTOT}.
+  \item[WPACK]  \begin{labeling}{gauss}
+                       \setlength{\itemsep}{-1ex}
+                       \item[gauss]  gaussian starting wavepacket with
+                         \begin{align*}
+                           <r> &= \mathtt{R0}   \\
+                           <p> &= \mathtt{P0}   \\
+                           <r^2> - <r>^2 &= \frac{1}{2 * \mathtt{MASSA} * \mathtt{OMEGA}}
+                         \end{align*}
+                       \item[old]  starting wavepacket read from the end of the file \texttt{FILE\_WP}: a previuous time
+                         evolution is continuated. The new results are appended to \texttt{FILE\_WP}.
+                       \item[read]  starting wavepacket read from the formatted file \texttt{FILE\_INIWP}.
+                     \end{labeling}
+  \item[OMEGA] see \texttt{WPACK}.
+  \item[R0] see \texttt{WPACK}.
+  \item[P0] see \texttt{WPACK}.
+  \item[FILE\_MOL] name of the input file containing energies and couplings, in the diabatic representation.
+    See the ``quant\_sys'' module.
+  \item[FILE\_INIWP] name of the formatted input file containing the starting wavepacket if \texttt{WPACK='read'}. 
+    \texttt{FILE\_INIWP} contains as many record as the number of grid points. Each
+    record has the form \\
+    $r$ ~~~ $wpx$ \\
+    where $r$(1:\texttt{NDIM}) are the coordinate values in the given point of the grid and $wpx$ is the value of the
+    wavepacket in that point for the state \texttt{ISTATI}. It is assumed that the starting wavepacket is real.
+    Only if \texttt{WPACK='read'}.
+  \item[HCOMPLEX] \texttt{F}, the diabatic Hamiltonian is real (default) ; \\
+    \texttt{T}, the diabatic Hamiltonian is complex.
+  \item[ADIABATIZE] \begin{labeling}{3}
+                       \setlength{\itemsep}{-0.5ex}
+                       \item[0] initial conditions and results in the diabatic representation (default).
+                       \item[1] initial conditions in the diabatic representation, results in the adiabatic
+                      representation. 
+                       \item[2] initial conditions and results in the adiabatic representation.
+                       \item[3] initial conditions in the adiabatic representation, results in the diabatic
+                      representation.
+                    \end{labeling}
+  \item[NPRT] number of time steps between two consecutive writings. Default, \texttt{NPRT=1}.
+  \item[NPRT\_WP] like \texttt{NPRT}, but for the wavefunction. Default, \texttt{NPRT\_WP=NPRT}.
+  \item[ENE\_ADD] factor to be added to the total energy. Default, \texttt{ENE\_ADD=0}.
+  \item[IWRT] \begin{labeling}{>9}
+                       \setlength{\itemsep}{-0.5ex}
+                       \item[0] normal writing (default).
+                       \item[>0] total and kinetic energies are written.
+                       \item[>1] the wavepacket is written on \texttt{FILE\_WP}. If \texttt{NDIM=1} the
+                         wavepackets are also written on the formatted file 'WP'.
+                       \item[>2] the grid, together with the adiabatic energies, is written.
+                       \item[>3] diabatic populations, diabatic energies, and diabatic epot matrix 
+                         (irrespective of the value of \texttt{ADIABATIZE}). 
+                       \item[>9] the grid is written and the calculation is stopped.
+                    \end{labeling}
+  \item[THRWP] threshold for writings on the formatted file 'WP'. A point of the grid is
+    written only if a) the population in that point of one of the wavepackets is larger than 
+    the threshold, b) is found between two points with population larger than the threshold.
+  \item[THR\_ABSPOT] threshold for the absorbing potential. If the absolute value of the absorbing potential
+    (imaginary part of the diagonal terms in the diabatic Hamiltonian) is larger than the threshold, the
+    absorbing potential is applied. Relevant only for \texttt{HCOMPLEX=T}. Default,
+    \texttt{THR\_ABSPOT=1.d-7}.
+  \item[RADIATION] \texttt{F}, normal calculation (default); \\ 
+    \texttt{T}, interaction with the electromagnetic radiation.
+\end{labeling}
+%\end{description}
+
+
+\end{document}
