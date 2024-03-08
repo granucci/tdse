@@ -74,9 +74,9 @@ program rd_resu
        call ekin(rw,ek,ep,pop)
        call rcalc(rw,pop,ravg,rsd,pavg,psd)
        write(2,'(a,i8,a,f15.6,a,e18.9)')'   step=',k,'  time (fs)=',ti,' ekin=',sum(ek)
-       write(2,'(a)') ' State      pop       ekin           epot                  <r>            r_sd        <p>    p_sd'
+       write(2,'(a)') ' Time    State      pop       ekin           epot                  <r>            r_sd        <p>    p_sd'
        do i=1,nstati
-          write(2,'(i6,f12.6,*(E18.9))') i,pop(i),ek(i),ep(i),(ravg(j,i),rsd(j,i),j=1,ndim), &
+          write(2,'(f15.6,i6,f12.6,*(E18.9))') ti,i,pop(i),ek(i),ep(i),(ravg(j,i),rsd(j,i),j=1,ndim), &
              & (pavg(j,i),psd(j,i),j=1,ndim)
        end do
        write(6,'(a,i8,a,f15.6,a,20f12.6)')'#   step=',k,'  time (fs)=',ti,' pop=',pop
