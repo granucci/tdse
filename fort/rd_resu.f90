@@ -4,9 +4,10 @@ program rd_resu
   complex (kind=dpc), parameter :: zzero  = (0.0_dpr,0.0_dpr)
   character (len=120) :: filewp,card
   integer             :: narg,k,icod,ndim,nrtot,nstati,a,i,j
-  real (kind=dpr)     :: ti,tini,tend,rmin,drtot,rdiss
+  real (kind=dpr)     :: ti,tini,tend,rmin,drtot,rdiss,drx
   type (discr)        :: d
   complex (kind=dpc), allocatable, dimension (:,:) :: rw
+  real (kind=dpr), allocatable, dimension (:,:)    :: wpx
   real (kind=dpr), allocatable, dimension (:)      :: r
   real (kind=dpr), allocatable, dimension (:,:)    :: pval
   real (kind=dpr), allocatable, dimension (:)      :: ek,ep,pop
@@ -14,7 +15,8 @@ program rd_resu
   !
   narg = command_argument_count()
   if (narg <= 1) then
-     write(6,'(a)') ' Uso: rd_resu <file_wp> time_ini [time_end, rdiss]'
+     write(6,'(a)') ' Usage: rd_resu <file_wp> time_ini [time_end, rdiss]'
+     write(6,'(a)') ' if rdiss<0 the marginal populations for the coordinate -rdiss are written'
      stop 12
   endif
   !
@@ -89,6 +91,8 @@ program rd_resu
           write(2,'(a,f12.6,a)') ' At dissociation (r >',rdiss,')'
           write(2,'(a)') ' State      pop       ekin           epot                  <r>            r_sd'
           write(2,'(i6,f12.6,4e18.9)') (i,pop(i),ek(i),ep(i),ravg(1,i),rsd(1,i),i=1,nstati)
+       elseif (ndim > 1) then
+         call marginal
        endif
        if (narg == 2) then
           exit
@@ -97,6 +101,32 @@ program rd_resu
     endif
   end do
 contains
+  !****************************************************************************
+  subroutine marginal
+    implicit none
+    integer :: koord
+    real(dpr) :: drx
+    integer :: a,i
+    koord=nint(abs(rdiss))
+    write(card,*)koord
+    filewp="WP_marginal_"//trim(adjustl(card))
+    open(3,file=filewp,form='formatted',status='unknown')
+    rewind 3
+    drx=product(d%dr(1:ndim))/d%dr(koord)
+    allocate(wpx(d%nr(koord)+1,nstati))
+    wpx = 0.0_dpr
+    do a=1,nstati
+      do i=1,nrtot
+        wpx(d%inddim(i,koord),a) = wpx(d%inddim(i,koord),a) + abs(rw(i,a))**2
+      end do
+    end do
+    wpx = wpx*drx
+    do i=1,d%nr(koord)
+      write(3,'(f15.6,3x,*(e18.9,3x))') d%rmin(koord)+(i-1)*d%dr(koord), wpx(i,:)
+    end do
+    close(3)
+    deallocate(wpx)
+  end subroutine marginal
   !****************************************************************************
   subroutine ekin(rw,ek,ep,pop)
     use singleton
